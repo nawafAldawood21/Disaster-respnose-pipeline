@@ -3,14 +3,6 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
-    """
-    INPUT:
-    messages_filepath - path to messages csv file
-    categories_filepath - path to categories csv file
-    
-    OUTPUT:
-    df - Merged data
-    """
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     df = pd.merge(messages, categories, on = 'id')
@@ -18,63 +10,27 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
-    """
-    INPUT:
-    df - Merged data
-    
-    OUTPUT:
-    df - Cleaned data
-    """
-    # create dataframe of the 36 individual category columns
-    categories = df['categories'].str.split(pat=';', expand = True)
-    
-    # select the first row of the categories dataframe
-    row = categories.iloc[0]
-    
-    # use this row to extract a list of new column names for categories
-    category_colnames = row.apply(lambda x:x[:-2])
-    
-    # rename the columns of 'categories'
+    categories = df.categories.str.split(";", expand=True)
+    row = categories.loc[0]
+    category_colnames = row.apply(lambda i: i[:-2])
+
     categories.columns = category_colnames
-    
-    # convert category values to just numbers 0 or 1
     for column in categories:
-        # set each value to be the last character of the string
-        categories[column] = categories[column].astype(str).str[-1]
-        # convert column from string to numeric
-        categories[column] = categories[column].astype(int)
+        categories[column] =  categories[column].str[-1]
+        categories[column] = pd.to_numeric(categories[column])
+        
+    df = df.drop(columns = 'categories') 
+    df = df.join(categories)
     
-    # drop the original categories column from 'df'
-    df = df.drop('categories', axis = 1)
-    
-    # concatenate the original datafram with the new 'categories' dataframe
-    df = pd.concat([df, categories], axis = 1)
-    
-    # drop duplicates
-    df.drop_duplicates(inplace = True)
-    
-    # drop 'child_alone' column as it has only 0 (ZERO) values - as per our jupyter Notebook analysis
-    df = df.drop('child_alone', axis = 1)
-    
-    # As per our Jupyter Notebook analysis, 'related' column has max value of 2, it could be error
-    # therefore, we will replace '2' with '1'
-    df['related'] = df['related'].map(lambda x: 1 if x==2 else x)
+    df = df.drop_duplicates()
         
     return df
 
 
 def save_data(df, database_filename):
-    """
-    INPUT:
-    df - cleaned data
-    database_filename - database filename for sqlite database with (.db) file type
-    
-    OUTPUT:
-    None - save cleaned data into sqlite database
-    """
-    engine = create_engine('sqlite:///'+ database_filename)
-    df.to_sql('InsertTableName', engine, index = False, if_exists = 'replace')
 
+    engine = create_engine('sqlite:///'+ database_filename)
+    df.to_sql('InsertTableName', engine, index = False)
 
 def main():
     if len(sys.argv) == 4:
