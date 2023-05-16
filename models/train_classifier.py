@@ -19,99 +19,50 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, T
 from sqlalchemy import create_engine
 
 def load_data(database_filepath):
-    """
-    INPUT:
-    database_filepath - 
-    
-    OUTPUT:
-    X - messages (input variable) 
-    y - categories of the messages (output variable)
-    category_names - category name for y
-    """
     engine = create_engine('sqlite:///' + database_filepath)
     df = pd.read_sql_table('InsertTableName', engine)
-    
     X = df['message']
     y = df.iloc[:,4:]
     category_names = y.columns
     return X, y, category_names
 
-def tokenize(text):
-    """
-    INPUT:
-    text - raw text
-    
-    OUTPUT:
-    clean_tokens - tokenized messages
-    """
+def tokenize(text):   
     url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-    detected_urls = re.findall(url_regex, text)
+    detected_urls= re.findall(url_regex,text)
     for url in detected_urls:
-        text = text.replace(url, "urlplaceholder")
-    
-    tokens = word_tokenize(text)
+        text = text.replace(url,"urlplaceholder")
+    tokens= word_tokenize(text)
     lemmatizer = WordNetLemmatizer()
     
-    clean_tokens = []
+    clean_tokens=[]
     for tok in tokens:
         clean_tok = lemmatizer.lemmatize(tok).lower().strip()
         clean_tokens.append(clean_tok)
-        
+    
     return clean_tokens
 
 
-def build_model(clf = AdaBoostClassifier()):
-    """
-    INPUT:
-    clf - classifier model (If none is inputted, the function will use default 'AdaBoostClassifier' model) 
-    
-    OUTPUT:
-    cv = ML model pipeline after performing grid search
-    """
+def build_model():
     pipeline = Pipeline([
-        ('features', FeatureUnion([
-            ('text_pipeline', Pipeline([
-                ('vect', CountVectorizer(tokenizer=tokenize)),
-                ('tfidf', TfidfTransformer())
-            ]))
-        ])),
-        ('clf', MultiOutputClassifier(clf))
-    ])
+                            ('vect', CountVectorizer(tokenizer=tokenize)),
+                            ('tfidf', TfidfTransformer()),
+                            ('clf', moc)
+                        ])
     
     parameters = {
-        'clf__estimator__learning_rate':[0.5, 1.0],
-        'clf__estimator__n_estimators':[10,20]
-    
-    }
+        'clf__estimator__max_depth':[10, 50],
+        'clf__estimator__min_samples_leaf':[2,5,10]}
         
-    cv = GridSearchCV(pipeline, param_grid=parameters, cv=5, n_jobs=-1, verbose=3) 
+    cv = GridSearchCV(estimator=pipeline, param_grid=parameters) 
     
     return cv
     
 def evaluate_model(model, X_test, Y_test, category_names):
-    """
-    INPUT:
-    model - ML model
-    X_test - test messages
-    y_test - categories for test messages
-    category_names - category name for y
-    
-    OUTPUT:
-    none - print scores (precision, recall, f1-score) for each output category of the dataset.
-    """
     Y_pred_test = model.predict(X_test)
     print(classification_report(Y_test.values, Y_pred_test, target_names=category_names))
     
 
 def save_model(model, model_filepath):
-    """
-    INPUT:
-    model - ML model
-    model_filepath - location to save the model
-    
-    OUTPUT:
-    none
-    """
     with open(model_filepath, 'wb') as f:
         pickle.dump(model, f)
 
@@ -142,7 +93,6 @@ def main():
               'as the first argument and the filepath of the pickle file to '\
               'save the model to as the second argument. \n\nExample: python '\
               'train_classifier.py ../data/DisasterResponse.db classifier.pkl')
-
-
+        
 if __name__ == '__main__':
     main()
