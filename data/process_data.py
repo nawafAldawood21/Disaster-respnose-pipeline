@@ -20,7 +20,7 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
-    """
+     """
     Perform cleaning and preprocessing of the merged DataFrame.
     
     Args:
@@ -35,10 +35,14 @@ def clean_data(df):
 
     categories.columns = category_colnames
     for column in categories:
-        categories[column] =  categories[column].str[-1]
-        categories[column] = pd.to_numeric(categories[column])
-        
-    df = df.drop(columns = 'categories') 
+        # Convert values other than 0 and 1 to NaN
+        categories[column] = pd.to_numeric(categories[column], errors='coerce')
+        # Fill NaN values with 0
+        categories[column] = categories[column].fillna(0)
+        # Convert values greater than 1 to 1
+        categories[column] = categories[column].apply(lambda x: 1 if x > 1 else x)
+
+    df = df.drop(columns='categories') 
     df = df.join(categories)
     
     df = df.drop_duplicates()
