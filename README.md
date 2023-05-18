@@ -26,6 +26,29 @@ During a disaster event, the volume of incoming messages can be overwhelming for
 
 By providing a reliable and efficient mechanism for analyzing and categorizing disaster messages, the Disaster Response Pipeline Project empowers emergency workers to respond effectively and expedite relief efforts, ultimately saving lives and minimizing the impact of disasters.
 
+## File Structure
+
+The repository contains the following files and folders:
+
+- **app**: This folder contains the Flask web application files.
+  - **templates**: This subfolder contains the HTML templates used by the web app.
+    - **master.html**: The main page of the web app.
+    - **go.html**: The classification result page of the web app.
+  - **run.py**: The Flask file that runs the web app.
+
+- **data**: This folder contains the datasets and data processing script.
+  - **disaster_categories.csv**: The data file containing the categories of disaster messages.
+  - **disaster_messages.csv**: The data file containing the disaster messages.
+  - **process_data.py**: The Python script for the ETL pipeline that loads, cleans, and stores the data in a database.
+  - **InsertDatabaseName.db**: The SQLite database file to save the cleaned data.
+
+- **models**: This folder contains the machine learning model and training script.
+  - **train_classifier.py**: The Python script for the ML pipeline that loads the data, builds a text processing and machine learning pipeline, trains and tunes the model, and exports the final model as a pickle file.
+  - **classifier.pkl**: The saved trained model in pickle format.
+
+- **README.md**: The README file providing an overview of the project, explanation of files, and project structure.
+
+
 ## Running the Project
 
 To run the project, follow these steps:
