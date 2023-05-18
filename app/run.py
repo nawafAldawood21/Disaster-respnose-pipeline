@@ -38,52 +38,72 @@ model = joblib.load("../models/classifier.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
-    # Count of Categories
-    category_count = df.iloc[:,4:].sum()
-    category_names = list(category_count.index)
+    category_counts = df.iloc[:, 4:].sum()
+    category_names = list(category_counts.index)
     
-    category = df.iloc[:,4:]
-    category_mean = category.mean().sort_values(ascending=False)[1:11]
-    category_name = list(cat_mean.index)
+    category_mean = df.iloc[:, 4:].mean().sort_values(ascending=False)[1:11]
+    category_names_top10 = list(category_mean.index)
     
-    # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
-                {
+        {
             'data': [
                 Bar(
-                    x=category_names,
-                    y=category_counts
+                    x=genre_names,
+                    y=genre_counts,
                 )
             ],
-
             'layout': {
-                'title': 'Messages Distribution',
+                'title': 'Distribution of Message Genres',
                 'yaxis': {
                     'title': "Count"
                 },
                 'xaxis': {
-                    'title': "Kind"
-                },
-                'width': 850,
-                'height': 550,
-                'margin': dict(
-                    pad=5,
-                    b=100,
-                )
+                    'title': "Genre"
+                }
             }
-        },        
-        ]
+        },
+        {
+            'data': [
+                Bar(
+                    x=category_names,
+                    y=category_counts,
+                )
+            ],
+            'layout': {
+                'title': 'Distribution of Message Categories',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=category_names_top10,
+                    y=category_mean,
+                )
+            ],
+            'layout': {
+                'title': 'Top 10 Message Categories (by Proportion)',
+                'yaxis': {
+                    'title': "Proportion"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        }
+    ]
     
-    # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     
-    # render web page with plotly graphs
     return render_template('master.html', ids=ids, graphJSON=graphJSON)
 
 
