@@ -3,6 +3,16 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    """
+    Load and merge the messages and categories datasets.
+    
+    Args:
+        messages_filepath (str): Filepath of the messages dataset.
+        categories_filepath (str): Filepath of the categories dataset.
+    
+    Returns:
+        df (DataFrame): Merged DataFrame containing messages and categories.
+    """
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     df = pd.merge(messages, categories, on = 'id')
@@ -10,6 +20,15 @@ def load_data(messages_filepath, categories_filepath):
 
 
 def clean_data(df):
+    """
+    Perform cleaning and preprocessing of the merged DataFrame.
+    
+    Args:
+        df (DataFrame): Merged DataFrame containing messages and categories.
+    
+    Returns:
+        df (DataFrame): Cleaned DataFrame.
+    """
     categories = df.categories.str.split(";", expand=True)
     row = categories.loc[0]
     category_colnames = row.apply(lambda i: i[:-2])
@@ -28,9 +47,16 @@ def clean_data(df):
 
 
 def save_data(df, database_filename):
+    """
+    Save the cleaned DataFrame to a SQLite database.
+    
+    Args:
+        df (DataFrame): Cleaned DataFrame.
+        database_filename (str): Filename for the SQLite database.
+    """
 
     engine = create_engine('sqlite:///'+ database_filename)
-    df.to_sql('InsertTableName', engine, index = False)
+    df.to_sql('InsertTableName', engine, index = False,if_exists='replace')
 
 def main():
     if len(sys.argv) == 4:
